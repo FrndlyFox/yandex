@@ -1,31 +1,30 @@
 import sys
-from random import randint as rand
-from PyQt5 import QtCore, QtGui, QtWidgets
-from ui import Ui_MainWindow
+from PyQt5 import Qt, QtCore, QtGui, QtWidgets, uic
 
-class Main(QtWidgets.QMainWindow, Ui_MainWindow):
+class Main(QtWidgets.QMainWindow):
 	def __init__(self):
 		super().__init__()
 		self.clicked = False
-		self.setupUi(self)
-		self.btn.clicked.connect(self.click)
-		self.sz = (self.size().width(), self.size().height())
+		self.setupUi()
 
-	def click(self):
-		self.clicked = True
-		self.btn.hide()
+	def setupUi(self):
+		uic.loadUi('main.ui', self)
+		self.update_btn.clicked.connect(self.update)
 		self.update()
 
-	def paintEvent(self, event):
-		if self.clicked:
-			qp = QtGui.QPainter()
-			qp.begin(self)
-			for i in range(rand(1, 20)):
-				qp.setBrush(QtGui.QColor(*[rand(0, 255) for i in range(3)]))
-				rad = rand(5, 20)
-				pos = [rand(0, self.sz[0] - rad * 2), rand(0, self.sz[1] - rad * 2)]
-				qp.drawEllipse(pos[0], pos[1], rad * 2, rad * 2)
-			qp.end()
+	def update(self):
+		db = Qt.QSqlDatabase().addDatabase('QSQLITE')
+		db.setDatabaseName('coffee.sqlite')
+		db.open()
+		qry = Qt.QSqlQuery(db)
+		qry.prepare('SELECT * FROM coffee_info')
+		qry.exec()
+		model = Qt.QSqlQueryModel()
+		model.setQuery(qry)
+		while model.canFetchMore():
+			model.fetchMore()
+		db.close()
+		self.table.setModel(model)
 
 
 def except_hook(cls, exception, traceback):
