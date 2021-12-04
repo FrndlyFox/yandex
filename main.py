@@ -1,15 +1,19 @@
 import sys
 import sqlite3
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets, uic
+from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from UI.main import Ui_MainWindow as MainUI
+from UI.add import Ui_Form as AddUi
+from UI.edit import Ui_Form as EditUi
 
-class Main(QtWidgets.QMainWindow):
+
+class Main(QtWidgets.QMainWindow, MainUI):
 	def __init__(self):
 		super().__init__()
 		self.clicked = False
-		self.setupUi()
+		self.setupUi(self)
+		self.setup_ui()
 
-	def setupUi(self):
-		uic.loadUi('main.ui', self)
+	def setup_ui(self):
 		self.update_btn.clicked.connect(self.update)
 		self.add_btn.clicked.connect(self.add)
 		self.edit_btn.clicked.connect(self.edit)
@@ -17,7 +21,7 @@ class Main(QtWidgets.QMainWindow):
 
 	def update(self):
 		db = Qt.QSqlDatabase().addDatabase('QSQLITE')
-		db.setDatabaseName('coffee.sqlite')
+		db.setDatabaseName('data/coffee.sqlite')
 		db.open()
 		qry = Qt.QSqlQuery(db)
 		qry.prepare('SELECT * FROM coffee_info')
@@ -38,13 +42,13 @@ class Main(QtWidgets.QMainWindow):
 		self.edit_form.show()
 
 
-class Add(QtWidgets.QWidget):
+class Add(QtWidgets.QWidget, AddUi):
 	def __init__(self):
 		super().__init__()
-		self.setupUi()
+		self.setupUi(self)
+		self.setup_ui()
 
-	def setupUi(self):
-		uic.loadUi('add.ui', self)
+	def setup_ui(self):
 		self.save_btn.clicked.connect(self.save)
 
 	def save(self):
@@ -56,7 +60,7 @@ class Add(QtWidgets.QWidget):
 		price = self.price_edit.text()
 		volume = self.vol_edit.text()
 		db = Qt.QSqlDatabase().addDatabase('QSQLITE')
-		db.setDatabaseName('coffee.sqlite')
+		db.setDatabaseName('data/coffee.sqlite')
 		db.open()
 		qry = Qt.QSqlQuery(db)
 		qry.prepare(f'INSERT INTO coffee_info (id, name, roast_degree, type, description, price, volume) \
@@ -66,19 +70,19 @@ class Add(QtWidgets.QWidget):
 		self.close()
 
 
-class Edit(QtWidgets.QWidget):
+class Edit(QtWidgets.QWidget, EditUi):
 	def __init__(self):
 		super().__init__()
-		self.setupUi()
+		self.setupUi(self)
+		self.setup_ui()
 		self.load()
 
-	def setupUi(self):
-		uic.loadUi('edit.ui', self)
+	def setup_ui(self):
 		self.save_btn.clicked.connect(self.save)
 		self.coffee_list.currentRowChanged.connect(self.select)
 
 	def load(self):
-		with sqlite3.connect('coffee.sqlite') as connection:
+		with sqlite3.connect('data/coffee.sqlite') as connection:
 			self.res = connection.cursor().execute('SELECT * FROM coffee_info').fetchall()
 			self.res = list(map(list, self.res))
 			names = list(map(lambda x: x[1], self.res))
@@ -106,7 +110,7 @@ class Edit(QtWidgets.QWidget):
 				  WHERE \
 				  id = "{self.res[curr_row][0]}"'
 		db = Qt.QSqlDatabase().addDatabase('QSQLITE')
-		db.setDatabaseName('coffee.sqlite')
+		db.setDatabaseName('data/coffee.sqlite')
 		db.open()
 		qry = Qt.QSqlQuery(db)
 		qry.prepare(query)
